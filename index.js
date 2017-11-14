@@ -22,8 +22,9 @@ var nodemailer = require('nodemailer');
 var schedule = require('node-schedule');
 var Promise = require('promise');
 var escape = require('escape-html');
-
+var clientsocket = require('socket.io-client')('http://localhost:8080');
 var serviceAccount = require('./serviceAccountKey.json');
+var config = require('./config.json');
 
 firebase.initializeApp({
   credential: firebase.credential.cert(serviceAccount),
@@ -45,10 +46,89 @@ firebase.initializeApp({
    console.log(data.key);
 });
 
+console.log(config.tradeinterval);
+// add jobs when ever needed
+function assetCreateJob (){
+// get list of assets from firebase and update in blockchain
+//  call back to update firebase
+
+
+}
+
+function tradeJob (){
+// get list of assets from firebase and update in blockchain
+//  call back to update firebase
+
+
+}
+
+
+
+setInterval(assetCreateJob, 3000);
+setInterval(tradeJob, config.tradeinterval);
+
+ function createasset ()
+ {
+		var msg = {
+			name:'hello'
+		};
+		// alert('hi');
+		 //var io1 = socket.connect();
+		clientsocket.emit('createasset', msg);
+ }
+ clientsocket.on('createdasset', function(msg) {
+//	 alert(angular.toJson(msg));
+      console.log("message", msg);
+     // this.chats.push(msg);
+ });
+	
+
 	//pricelists.then
+	
+function startAssetListeners() {
+  firebase.database().ref('/propertys').on('child_added', function(postSnapshot) {
+    var postReference = postSnapshot.ref;
+    var uid = postSnapshot.val().propertyowner;
+	var blockchainassetid = postSnapshot.val().blockchainassetid;
+    var postId = postSnapshot.key;
+	console.log(uid);
+	if(!blockchainassetid)
+	{
+		console.log('blockchainassetid not defined');
+		createasset();
+		
+		
+	}
+    // Update the star count.
+    // [START post_value_event_listener]
+	/*
+    postReference.child('stars').on('value', function(dataSnapshot) {
+      updateStarCount(postReference);
+      // [START_EXCLUDE]
+      updateStarCount(firebase.database().ref('user-posts/' + uid + '/' + postId));
+      // [END_EXCLUDE]
+    }, function(error) {
+      console.log('Failed to add "value" listener at /posts/' + postId + '/stars node:', error);
+    });
+    // [END post_value_event_listener]
+    // Send email to author when a new star is received.
+    // [START child_event_listener_recycler]
+    postReference.child('stars').on('child_added', function(dataSnapshot) {
+      sendNotificationToUser(uid, postId);
+    }, function(error) {
+      console.log('Failed to add "child_added" listener at /posts/' + postId + '/stars node:', error);
+    });
+	*/
+    // [END child_event_listener_recycler]
+  });
+  console.log('New star notifier started...');
+  console.log('Likes count updater started...');
+}
+
+
  
 function startListeners() {
-  firebase.database().ref('/posts').on('child_added', function(postSnapshot) {
+  firebase.database().ref('/propertys').on('child_added', function(postSnapshot) {
     var postReference = postSnapshot.ref;
     var uid = postSnapshot.val().uid;
     var postId = postSnapshot.key;
@@ -101,5 +181,6 @@ function startWeeklyTopPostEmailer() {
 
 
 // Start the server.
-startListeners();
+//startListeners();
 startWeeklyTopPostEmailer();
+startAssetListeners();
